@@ -15,12 +15,13 @@ const errorHandler = (
 
   // Log error for debugging
   console.error("Error occurred:", {
-    message: error.message,
-    stack: error.stack,
-    url: req.url,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-  });
+  message: error.message,
+  cause: error.cause,   // yeh add karo
+  stack: error.stack,
+  url: req.url,
+  method: req.method,
+  timestamp: new Date().toISOString(),
+});
 
   // Handle different types of errors
   let statusCode = 500;
