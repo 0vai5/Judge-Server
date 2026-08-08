@@ -2,7 +2,16 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const { PORT, NODE_ENV, CORS_ORIGIN, JWT_SECRET, JWT_EXPIRES_IN, OPENROUTER_API_KEY, OPENROUTER_URL } = process.env;
+const {
+  PORT,
+  NODE_ENV,
+  CORS_ORIGIN,
+  JWT_SECRET,
+  JWT_EXPIRES_IN,
+  OPENROUTER_API_KEY,
+  OPENROUTER_URL,
+  DATABASE_URL,
+} = process.env;
 
 const env = {
   PORT: PORT || 5000,
@@ -12,6 +21,7 @@ const env = {
   JWT_EXPIRES_IN: JWT_EXPIRES_IN || "1d",
   OPENROUTER_API_KEY: OPENROUTER_API_KEY || "",
   OPENROUTER_URL: OPENROUTER_URL || "",
+  DATABASE_URL: DATABASE_URL || "",
 };
 
 export default env;
