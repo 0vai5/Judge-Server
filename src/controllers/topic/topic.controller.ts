@@ -16,19 +16,19 @@ const ALLOWED_SUBJECTS = [
   "history",
   "language",
   "general",
-  "Chemistry",
-  "Physics",
-  "Biology",
-  "Geography",
-  "Economics",
-  "Political Science",
-  "Psychology",
-  "Sociology",
-  "Philosophy",
-  "Art",
-  "Music",
-  "Physical Education",
-  "Computer Science",
+  "chemistry",
+  "physics",
+  "biology",
+  "geography",
+  "economics",
+  "political science",
+  "psychology",
+  "sociology",
+  "philosophy",
+  "art",
+  "music",
+  "physical education",
+  "computer science",
 ] as const;
 type Subject = (typeof ALLOWED_SUBJECTS)[number];
 
@@ -36,7 +36,7 @@ const isValidSubject = (value: any): value is Subject =>
   ALLOWED_SUBJECTS.includes(value);
 
 const StartTopic = asyncHandler(async (req: Request, res: Response) => {
-  const { subject } = req.body;
+  const { subject  } = req.body ?? {};
 
   if (subject !== undefined && !isValidSubject(subject)) {
     throw CustomError(
