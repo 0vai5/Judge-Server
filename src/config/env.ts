@@ -11,6 +11,7 @@ const {
   OPENROUTER_API_KEY,
   OPENROUTER_URL,
   DATABASE_URL,
+  GEMINI_API_KEY
 } = process.env;
 
 const env = {
@@ -22,6 +23,7 @@ const env = {
   OPENROUTER_API_KEY: OPENROUTER_API_KEY || "",
   OPENROUTER_URL: OPENROUTER_URL || "",
   DATABASE_URL: DATABASE_URL || "",
+  GEMINI_API_KEY: GEMINI_API_KEY || ""
 };
 
 export default env;
