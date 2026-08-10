@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/0vai5/Judge-Server#readme",
   "dependencies": {
+    "@google/genai": "^2.16.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
