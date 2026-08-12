@@ -4,7 +4,6 @@ import {
   createSession,
   findSessionsByUser,
   findSessionById,
-  updateSessionTranscript,
   endSession,
   softDeleteSession,
 } from "../../dbActions/session.actions";
@@ -47,25 +46,6 @@ const GetSession = asyncHandler(async (req: Request, res: Response) => {
     .json(new APIResponse("Session fetched successfully", { session }));
 });
 
-const UpdateTranscript = asyncHandler(async (req: Request, res: Response) => {
-  const { transcript } = req.body ?? {};
-  if (typeof transcript !== "string") {
-    throw CustomError(400, "transcript must be a string");
-  }
-
-  const userId = req.user!.id;
-  const id = req?.params?.id;
-  if (!id || typeof id !== "string" || !id.trim()) {
-    throw CustomError(400, "Invalid session ID");
-  }
-
-  const session = await updateSessionTranscript(id, userId, transcript);
-  if (!session) throw CustomError(404, "Session not found");
-  return res
-    .status(200)
-    .json(new APIResponse("Transcript updated successfully", { session }));
-});
-
 const EndSession = asyncHandler(async (req: Request, res: Response) => {
   const { status } = req.body ?? {};
   if (status !== "completed" && status !== "abandoned") {
@@ -100,7 +80,6 @@ export {
   StartSession,
   GetSessions,
   GetSession,
-  UpdateTranscript,
   EndSession,
   DeleteSession,
 };

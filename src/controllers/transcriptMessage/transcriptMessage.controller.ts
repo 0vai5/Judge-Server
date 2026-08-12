@@ -9,6 +9,7 @@ import { TranscriptMessageSchema } from "../../schemas/transcriptMessage.schema"
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
 import validate from "../../utils/validation";
+import { isSessionExpired } from "../../utils/sessionCap";
 
 const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -19,6 +20,11 @@ const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
 
   const session = await findSessionById(sessionId, userId);
   if (!session) throw CustomError(404, "Session not found");
+
+  if (session.status === "active" && isSessionExpired(session.startedAt)) {
+    await endSessionOnExpiry(sessionId, userId);
+    throw CustomError(410, "Session time limit reached");
+  }
 
   const { data, success, error } = validate(TranscriptMessageSchema, req.body);
   if (!success) {

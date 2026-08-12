@@ -29,19 +29,6 @@ export const findSessionById = async (id: string, userId: string) => {
   return result[0] || null;
 };
 
-// --- Step: append/replace transcript as the live session streams ---
-export const updateSessionTranscript = async (
-  id: string,
-  userId: string,
-  transcript: string,
-) => {
-  const result = await db
-    .update(sessions)
-    .set({ transcript, updatedAt: new Date() })
-    .where(and(eq(sessions.id, id), eq(sessions.userId, userId)))
-    .returning();
-  return result[0] || null;
-};
 
 // --- Step: only valid transition is active -> completed/abandoned ---
 export const endSession = async (
