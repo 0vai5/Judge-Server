@@ -6,6 +6,7 @@ import voiceRoutes from "./voice/voice.routes";
 import sessionRoutes from "./session/session.routes";
 import scoreRoutes from "./score/score.routes";
 import aiQuestionRoutes from "./aiQuestions/aiQuestions.routes";
+import transcriptMessageRoutes from "./transcriptMessage/transcriptMessage.routes";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/voice", voiceRoutes);
 router.use("/session", sessionRoutes);
 router.use("/score", scoreRoutes);
 router.use("/aiQuestions", aiQuestionRoutes);
+router.use("/transcriptMessages", transcriptMessageRoutes);
 
 export default router;
