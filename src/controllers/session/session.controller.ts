@@ -9,13 +9,17 @@ import {
 } from "../../dbActions/session.actions";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
+import { EndSessionSchema, StartSessionSchema } from "../../schemas/session.schema";
+import validate from "../../utils/validation";
 
 const StartSession = asyncHandler(async (req: Request, res: Response) => {
-  const { topicId } = req.body ?? {};
-  if (!topicId || typeof topicId !== "string") {
-    throw CustomError(400, "topicId is required");
+  const { data, success, error } = validate(StartSessionSchema, req.body);
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
 
+  const { topicId } = data;
   const userId = req.user!.id;
   const session = await createSession(userId, topicId);
 
@@ -47,11 +51,12 @@ const GetSession = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const EndSession = asyncHandler(async (req: Request, res: Response) => {
-  const { status } = req.body ?? {};
-  if (status !== "completed" && status !== "abandoned") {
-    throw CustomError(400, "status must be 'completed' or 'abandoned'");
+  const { data, success, error } = validate(EndSessionSchema, req.body);
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
-
+  const { status } = data;
   const userId = req.user!.id;
   const id = req?.params?.id;
   if (!id || typeof id !== "string" || !id.trim()) {
@@ -76,10 +81,4 @@ const DeleteSession = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new APIResponse("Session deleted successfully"));
 });
 
-export {
-  StartSession,
-  GetSessions,
-  GetSession,
-  EndSession,
-  DeleteSession,
-};
+export { StartSession, GetSessions, GetSession, EndSession, DeleteSession };
