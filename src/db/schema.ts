@@ -35,6 +35,7 @@ export const sessionStatusEnum = pgEnum("session_status", [
   "completed",
   "abandoned",
 ]);
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -71,7 +72,6 @@ export const sessions = pgTable("sessions", {
     .references(() => topics.id)
     .notNull(),
   status: sessionStatusEnum("status").default("active").notNull(),
-  transcript: text("transcript"), // full session transcript, appended as it streams
   startedAt: timestamp("started_at").defaultNow().notNull(),
   endedAt: timestamp("ended_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -101,5 +101,15 @@ export const scores = pgTable("scores", {
   correctness: integer("correctness").notNull(),
   gaps: text("gaps").array().notNull(), // matches testScoring.ts's gaps: string[]
   suggestedRevisitPoints: text("suggested_revisit_points").array().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+
+export const transcriptMessages = pgTable("transcript_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").references(() => sessions.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  role: messageRoleEnum("role").notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
