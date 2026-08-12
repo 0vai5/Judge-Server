@@ -2,16 +2,13 @@ import { Request, Response } from "express";
 import CustomError from "http-errors";
 import { findSessionById } from "../../dbActions/session.actions";
 import {
-  createTranscriptMessage,
-  findMessagesBySession,
+    createTranscriptMessage,
+    findMessagesBySession,
 } from "../../dbActions/transcriptMessage.actions";
+import { TranscriptMessageSchema } from "../../schemas/transcriptMessage.schema";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
-
-const ALLOWED_ROLES = ["user", "assistant"] as const;
-type Role = (typeof ALLOWED_ROLES)[number];
-const isValidRole = (value: any): value is Role =>
-  ALLOWED_ROLES.includes(value);
+import validate from "../../utils/validation";
 
 const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -23,19 +20,17 @@ const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
   const session = await findSessionById(sessionId, userId);
   if (!session) throw CustomError(404, "Session not found");
 
-  const { role, content } = req.body ?? {};
-  if (!isValidRole(role)) {
-    throw CustomError(400, `Role must be one of: ${ALLOWED_ROLES.join(", ")}`);
-  }
-  if (typeof content !== "string" || !content.trim()) {
-    throw CustomError(400, "Content is required");
+  const { data, success, error } = validate(TranscriptMessageSchema, req.body);
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
 
   const message = await createTranscriptMessage({
     sessionId,
     userId,
-    role,
-    content: content.trim(),
+    role: data.role,
+    content: data.content,
   });
 
   return res
