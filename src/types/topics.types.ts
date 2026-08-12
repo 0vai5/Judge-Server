@@ -1,1 +1,0 @@
-export type Subject = "math" | "science" | "history" | "language" | "general" | "Chemistry" | "Physics" | "Biology" | "Geography" | "Economics" | "Political Science" | "Psychology" | "Sociology" | "Philosophy" | "Art" | "Music" | "Physical Education" | "Computer Science";

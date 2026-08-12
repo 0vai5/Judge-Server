@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
-import CustomError from "http-errors";
 import { db } from "../config/db";
-import { scores, sessions } from "../db/schema";
+import { scores } from "../db/schema";
 
-type ScoreInput = {
+type CreateScoreInput = {
+  sessionId: string;
   clarity: number;
   completeness: number;
   correctness: number;
@@ -11,25 +11,8 @@ type ScoreInput = {
   suggestedRevisitPoints: string[];
 };
 
-// --- Step: the actual guard — session must be "completed" before scoring ---
-export const createScore = async (sessionId: string, data: ScoreInput) => {
-  const [session] = await db
-    .select()
-    .from(sessions)
-    .where(eq(sessions.id, sessionId));
-
-  if (!session) {
-    throw CustomError(404, "Session not found");
-  }
-  if (session.status !== "completed") {
-    throw CustomError(
-      400,
-      "Cannot score a session that hasn't ended yet",
-    );
-  }
-
-  const values: typeof scores.$inferInsert = { sessionId, ...data };
-  const result = await db.insert(scores).values(values).returning();
+export const createScore = async (data: CreateScoreInput) => {
+  const result = await db.insert(scores).values(data).returning();
   return result[0] || null;
 };
 

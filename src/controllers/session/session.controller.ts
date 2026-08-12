@@ -1,3 +1,4 @@
+// src/controllers/session/session.controller.ts
 import { Request, Response } from "express";
 import CustomError from "http-errors";
 import {
@@ -7,17 +8,24 @@ import {
   endSession,
   softDeleteSession,
 } from "../../dbActions/session.actions";
+import { scoreSession } from "../../services/scoring.service";
+import {
+  StartSessionSchema,
+  EndSessionSchema,
+} from "../../schemas/session.schema";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
+import validate from "../../utils/validation";
 
 const StartSession = asyncHandler(async (req: Request, res: Response) => {
-  const { topicId } = req.body ?? {};
-  if (!topicId || typeof topicId !== "string") {
-    throw CustomError(400, "topicId is required");
+  const { data, success, error } = validate(StartSessionSchema, req.body ?? {});
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
 
   const userId = req.user!.id;
-  const session = await createSession(userId, topicId);
+  const session = await createSession(userId, data.topicId);
 
   return res
     .status(201)
@@ -47,11 +55,13 @@ const GetSession = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const EndSession = asyncHandler(async (req: Request, res: Response) => {
-  const { status } = req.body ?? {};
-  if (status !== "completed" && status !== "abandoned") {
-    throw CustomError(400, "status must be 'completed' or 'abandoned'");
+  const { data, success, error } = validate(EndSessionSchema, req.body ?? {});
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
 
+  const { status } = data;
   const userId = req.user!.id;
   const id = req?.params?.id;
   if (!id || typeof id !== "string" || !id.trim()) {
@@ -60,6 +70,15 @@ const EndSession = asyncHandler(async (req: Request, res: Response) => {
 
   const session = await endSession(id, userId, status);
   if (!session) throw CustomError(404, "Session not found");
+
+  if (status === "completed") {
+    try {
+      await scoreSession(id);
+    } catch (err) {
+      console.error("Auto-scoring failed for session", id, err);
+    }
+  }
+
   return res
     .status(200)
     .json(new APIResponse("Session ended successfully", { session }));
@@ -76,10 +95,4 @@ const DeleteSession = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new APIResponse("Session deleted successfully"));
 });
 
-export {
-  StartSession,
-  GetSessions,
-  GetSession,
-  EndSession,
-  DeleteSession,
-};
+export { StartSession, GetSessions, GetSession, EndSession, DeleteSession };
