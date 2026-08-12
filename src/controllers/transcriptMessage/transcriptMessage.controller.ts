@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import CustomError from "http-errors";
-import { findSessionById } from "../../dbActions/session.actions";
+import { endSession, findSessionById } from "../../dbActions/session.actions";
 import {
-    createTranscriptMessage,
-    findMessagesBySession,
+  createTranscriptMessage,
+  findMessagesBySession,
 } from "../../dbActions/transcriptMessage.actions";
 import { TranscriptMessageSchema } from "../../schemas/transcriptMessage.schema";
 import asyncHandler from "../../utils/asyncHandler";
@@ -22,7 +22,7 @@ const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
   if (!session) throw CustomError(404, "Session not found");
 
   if (session.status === "active" && isSessionExpired(session.startedAt)) {
-    await endSessionOnExpiry(sessionId, userId);
+    await endSession(sessionId, userId, "completed");
     throw CustomError(410, "Session time limit reached");
   }
 
