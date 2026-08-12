@@ -6,45 +6,20 @@ import {
   findTopicById,
   updateTopic,
   softDeleteTopic,
-} from "../../dbActions/task.actions";
+} from "../../dbActions/topic.actions";
+import { StartTopicSchema, UpdateTopicSchema } from "../../schemas/topic.schema";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
-
-const ALLOWED_SUBJECTS = [
-  "math",
-  "science",
-  "history",
-  "language",
-  "general",
-  "chemistry",
-  "physics",
-  "biology",
-  "geography",
-  "economics",
-  "political science",
-  "psychology",
-  "sociology",
-  "philosophy",
-  "art",
-  "music",
-  "physical education",
-  "computer science",
-] as const;
-type Subject = (typeof ALLOWED_SUBJECTS)[number];
-
-const isValidSubject = (value: any): value is Subject =>
-  ALLOWED_SUBJECTS.includes(value);
+import validate from "../../utils/validation";
 
 const StartTopic = asyncHandler(async (req: Request, res: Response) => {
-  const { subject  } = req.body ?? {};
-
-  if (subject !== undefined && !isValidSubject(subject)) {
-    throw CustomError(
-      400,
-      `Subject must be one of: ${ALLOWED_SUBJECTS.join(", ")}`,
-    );
+  const { data, success, error } = validate(StartTopicSchema, req.body ?? {});
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
 
+  const { subject } = data;
   const userId = req.user!.id;
   const topic = await createTopic(userId, subject);
 
@@ -76,27 +51,18 @@ const GetTopic = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const UpdateTopic = asyncHandler(async (req: Request, res: Response) => {
-  const { title, subject } = req.body;
-
-  if (subject !== undefined && !isValidSubject(subject)) {
-    throw CustomError(
-      400,
-      `Subject must be one of: ${ALLOWED_SUBJECTS.join(", ")}`,
-    );
+  const { data, success, error } = validate(UpdateTopicSchema, req.body ?? {});
+  if (!success) {
+    const message = error.issues?.[0]?.message || "Validation failed";
+    throw CustomError(400, message);
   }
-  if (title !== undefined && (typeof title !== "string" || !title.trim())) {
-    throw CustomError(400, "Title must be a non-empty string");
-  }
-
-  const data: Partial<{ title: string; subject: Subject }> = {};
-  if (title !== undefined) data.title = title.trim();
-  if (subject !== undefined) data.subject = subject;
 
   const userId = req.user!.id;
   const id = req?.params?.id;
   if (!id || typeof id !== "string" || !id.trim()) {
     throw CustomError(400, "Invalid topic ID");
   }
+
   const topic = await updateTopic(id, userId, data);
   if (!topic) throw CustomError(404, "Topic not found");
   return res

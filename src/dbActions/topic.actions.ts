@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../config/db";
 import { topics } from "../db/schema";
-import { Subject } from "../types/topics.types";
+import { Subject } from "../schemas/topic.schema";
 
 type Values = {
   userId: string;
