@@ -5,6 +5,7 @@ import topicRoutes from "./topic/topic.routes";
 import voiceRoutes from "./voice/voice.routes";
 import sessionRoutes from "./session/session.routes";
 import scoreRoutes from "./score/score.routes";
+import aiQuestionRoutes from "./aiQuestions/aiQuestions.routes";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/topic", topicRoutes);
 router.use("/voice", voiceRoutes);
 router.use("/session", sessionRoutes);
 router.use("/score", scoreRoutes);
+router.use("/aiQuestions", aiQuestionRoutes);
 
 export default router;
