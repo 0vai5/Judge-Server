@@ -1,12 +1,13 @@
 import {
-  pgTable,
-  uuid,
-  varchar,
-  timestamp,
-  pgEnum,
-  boolean,
-  text,
-  integer,
+    boolean,
+    integer,
+    pgEnum,
+    pgTable,
+    text,
+    timestamp,
+    uuid,
+    varchar,
+    vector,
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -113,3 +114,11 @@ export const transcriptMessages = pgTable("transcript_messages", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const topicReferences = pgTable("topic_references", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  topicId: uuid("topic_id").references(() => topics.id).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  embedding: vector("embedding", { dimensions: 2048 }).notNull(),
+})
