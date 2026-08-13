@@ -24,8 +24,9 @@ const StartSession = asyncHandler(async (req: Request, res: Response) => {
     throw CustomError(400, message);
   }
 
+  const { topicId } = data;
   const userId = req.user!.id;
-  const session = await createSession(userId, data.topicId);
+  const session = await createSession(userId, topicId);
 
   return res
     .status(201)
