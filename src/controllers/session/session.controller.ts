@@ -1,18 +1,17 @@
-// src/controllers/session/session.controller.ts
 import { Request, Response } from "express";
 import CustomError from "http-errors";
 import {
   createSession,
-  findSessionsByUser,
-  findSessionById,
   endSession,
+  findSessionById,
+  findSessionsByUser,
   softDeleteSession,
 } from "../../dbActions/session.actions";
-import { scoreSession } from "../../services/scoring.service";
 import {
-  StartSessionSchema,
   EndSessionSchema,
+  StartSessionSchema,
 } from "../../schemas/session.schema";
+import { scoreSession } from "../../services/scoring.service";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
 import validate from "../../utils/validation";
@@ -96,4 +95,4 @@ const DeleteSession = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new APIResponse("Session deleted successfully"));
 });
 
-export { StartSession, GetSessions, GetSession, EndSession, DeleteSession };
+export { DeleteSession, EndSession, GetSession, GetSessions, StartSession };
