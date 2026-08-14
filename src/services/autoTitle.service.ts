@@ -1,36 +1,114 @@
-// src/services/autoTitle.service.ts
-import { updateTopic } from "../dbActions/topic.actions";
+import CustomError from "http-errors";
+import { openAIClient, OPENROUTER_CHAT_MODEL } from "../config/openAI";
+import { updateTopicBySessionID } from "../dbActions/topic.actions";
+import { Subject } from "../schemas/topic.schema";
 
-/**
- * TODO: Auto-generate a topic title from the first exchange of a session,
- * mirroring ChatGPT/Claude thread auto-naming UX (see PRD's "Topics
- * auto-creation pattern").
- *
- * BLOCKED: depends on reliable tool-calling / a text-channel response from
- * Gemini Live (see Day 5-6 investigation — audio-only modality doesn't
- * surface toolCall events, root cause still unconfirmed). This needs *some*
- * text-generating call to produce a short title from the first user
- * explanation — either:
- *   (a) a small OpenRouter call (same pattern as scoring.service.ts), or
- *   (b) a Gemini Live text-modality turn, once that's unblocked.
- *
- * Leaning toward (a) since it doesn't depend on the blocked investigation
- * at all — OpenRouter is already wired and separate from the live voice
- * layer by design (see PRD 2: "Gemini Live never does scoring, OpenRouter
- * never touches the live audio loop" — title generation is a post-hoc
- * reasoning task, same bucket as scoring).
- *
- * Trigger point: call this once, after the first user transcript message
- * for a topic's first session is logged — not on every message.
- */
+interface TopicGenerationResponse {
+  title: string;
+  subject: Subject;
+}
+
+const validSubjects: Subject[] = [
+  "math",
+  "science",
+  "history",
+  "language",
+  "general",
+  "chemistry",
+  "physics",
+  "biology",
+  "geography",
+  "economics",
+  "political science",
+  "psychology",
+  "sociology",
+  "philosophy",
+  "art",
+  "music",
+  "physical education",
+  "computer science",
+];
+
 export const generateTopicTitle = async (
-  topicId: string,
+  sessionId: string,
   userId: string,
   firstUserMessage: string,
-): Promise<void> => {
-  // TODO: implement
-  // 1. Call OpenRouter with a short prompt: summarize firstUserMessage into
-  //    a 3-6 word title, same client/fallback pattern as scoring.service.ts
-  // 2. updateTopic(topicId, userId, { title: generatedTitle })
-  throw new Error("generateTopicTitle not yet implemented");
+): Promise<TopicGenerationResponse> => {
+  const prompt = `
+You are an expert educational tutor.
+
+Analyze the student's first message and determine the main
+learning topic and subject.
+
+Student's first message:
+<student_message>
+${firstUserMessage}
+</student_message>
+
+Generate a concise and meaningful topic title.
+
+Requirements:
+- It should describe what the student is trying to learn.
+- Do not include unnecessary words.
+- Do not include explanations.
+
+Subject must be exactly one of:
+math, science, history, language, general,
+chemistry, physics, biology, geography, economics,
+political science, psychology, sociology, philosophy,
+art, music, physical education, computer science.
+
+If the subject cannot confidently be determined, use "general".
+
+Return ONLY valid JSON:
+
+{
+  "title": "string",
+  "subject": "string"
+}
+`;
+
+  const response = await openAIClient.chat.completions.create({
+    model: OPENROUTER_CHAT_MODEL,
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+
+  if (!content) {
+    throw CustomError(500, "OpenRouter returned an empty response");
+  }
+
+  let data: TopicGenerationResponse;
+
+  try {
+    data = JSON.parse(content);
+  } catch {
+    throw CustomError(500, "OpenRouter returned invalid JSON");
+  }
+
+  const { title, subject } = data;
+
+  if (!title || !subject || !validSubjects.includes(subject)) {
+    throw CustomError(500, "OpenRouter response missing title or subject");
+  }
+
+  const updatedTopic = await updateTopicBySessionID(sessionId, userId, {
+    title: title,
+    subject: subject,
+  });
+
+  if (!updatedTopic) {
+    throw CustomError(500, "Failed to update topic");
+  }
+
+  return {
+    title: updatedTopic.title!,
+    subject: updatedTopic.subject!,
+  };
 };

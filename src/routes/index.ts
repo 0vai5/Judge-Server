@@ -12,11 +12,11 @@ const router = Router();
 
 router.use("/auth", localAuthRoutes);
 router.use("/user", userRoutes);
-router.use("/topic", topicRoutes);
 router.use("/voice", voiceRoutes);
 router.use("/session", sessionRoutes);
-router.use("/score", scoreRoutes);
-router.use("/aiQuestions", aiQuestionRoutes);
+router.use("/topic", topicRoutes);
 router.use("/transcriptMessages", transcriptMessageRoutes);
+router.use("/aiQuestions", aiQuestionRoutes);
+router.use("/score", scoreRoutes);
 
 export default router;
