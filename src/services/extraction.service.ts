@@ -1,5 +1,5 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import pdfParse from "pdf-parse"
+import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import { s3Client, S3_BUCKET } from "../config/s3";
 
@@ -25,8 +25,13 @@ export const extractTextFromSource = async (
   const buffer = await downloadFromS3(s3Key);
 
   if (contentType === "application/pdf") {
-    const result = await pdfParse(buffer);
-    return result.text;
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const result = await parser.getText();
+      return result.text;
+    } finally {
+      await parser.destroy();
+    }
   }
 
   if (
