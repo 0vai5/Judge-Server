@@ -7,10 +7,15 @@ import {
   updateTopic,
   softDeleteTopic,
 } from "../../dbActions/topic.actions";
-import { StartTopicSchema, UpdateTopicSchema } from "../../schemas/topic.schema";
+import {
+  StartTopicSchema,
+  UpdateTopicSchema,
+  StartTopicWithResourcesSchema,
+} from "../../schemas/topic.schema";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
 import validate from "../../utils/validation";
+import { extractTextFromSource } from "../../services/extraction.service";
 
 const StartTopic = asyncHandler(async (req: Request, res: Response) => {
   const { data, success, error } = validate(StartTopicSchema, req.body ?? {});
@@ -80,5 +85,27 @@ const DeleteTopic = asyncHandler(async (req: Request, res: Response) => {
   if (!topic) throw CustomError(404, "Topic not found");
   return res.status(200).json(new APIResponse("Topic deleted successfully"));
 });
+
+const startTopicWithResources = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { data, success, error } = validate(
+      StartTopicWithResourcesSchema,
+      req.body ?? {},
+    );
+    if (!success) {
+      const message = error.issues?.[0]?.message || "Validation failed";
+      throw CustomError(400, message);
+    }
+
+    // Download Per File and Extract (LOOP EACH FILE ONE BY ONE)
+    // Chunk it
+    // Embed Each chunk
+    // Title Call
+    // Topic Insertion/Creation
+    // Resource Creation
+    // SessionCreation
+    // transcript MessageCreation
+  },
+);
 
 export { StartTopic, GetTopics, GetTopic, UpdateTopic, DeleteTopic };
