@@ -1,13 +1,13 @@
 import {
-    boolean,
-    integer,
-    pgEnum,
-    pgTable,
-    text,
-    timestamp,
-    uuid,
-    varchar,
-    vector,
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -105,20 +105,44 @@ export const scores = pgTable("scores", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
 export const transcriptMessages = pgTable("transcript_messages", {
   id: uuid("id").primaryKey().defaultRandom(),
-  sessionId: uuid("session_id").references(() => sessions.id).notNull(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  sessionId: uuid("session_id")
+    .references(() => sessions.id)
+    .notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
   role: messageRoleEnum("role").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const topicReferences = pgTable("topic_references", {
+export const sources = pgTable("sources", {
   id: uuid("id").primaryKey().defaultRandom(),
-  topicId: uuid("topic_id").references(() => topics.id).notNull(),
-  content: text("content").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  size: integer("size").notNull(),
+  s3Key: text("s3_key").notNull(),
+  contentType: varchar("content_type", { length: 100 }).notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const topicResources = pgTable("topic_resources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  topicId: uuid("topic_id")
+    .references(() => topics.id)
+    .notNull(),
+  sourceId: uuid("source_id")
+    .references(() => sources.id)
+    .notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
+  chunkIndex: integer("chunk_index").notNull(),
+  chunkText: text("chunk_text").notNull(),
   embedding: vector("embedding", { dimensions: 2048 }).notNull(),
-})
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
