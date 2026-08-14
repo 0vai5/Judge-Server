@@ -7,11 +7,13 @@ import sessionRoutes from "./session/session.routes";
 import scoreRoutes from "./score/score.routes";
 import aiQuestionRoutes from "./aiQuestions/aiQuestions.routes";
 import transcriptMessageRoutes from "./transcriptMessage/transcriptMessage.routes";
+import sourceRoutes from "./source/source.routes"
 
 const router = Router();
 
 router.use("/auth", localAuthRoutes);
 router.use("/user", userRoutes);
+router.use("/upload", sourceRoutes)
 router.use("/voice", voiceRoutes);
 router.use("/session", sessionRoutes);
 router.use("/topic", topicRoutes);
