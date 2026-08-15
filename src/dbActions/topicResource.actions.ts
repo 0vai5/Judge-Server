@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "../config/db";
+import { db, DbClient } from "../config/db";
 import { topicResources } from "../db/schema";
 
 type ChunkInput = {
@@ -11,9 +11,9 @@ type ChunkInput = {
   embedding: number[];
 };
 
-export const insertChunks = async (chunks: ChunkInput[]) => {
+export const insertChunks = async (chunks: ChunkInput[], dbClient: DbClient = db) => {
   if (chunks.length === 0) return [];
-  return db.insert(topicResources).values(chunks).returning();
+  return dbClient.insert(topicResources).values(chunks).returning();
 };
 
 export const findChunksByTopic = async (topicId: string) => {

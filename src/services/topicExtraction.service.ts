@@ -1,4 +1,3 @@
-import { openAIClient, OPENROUTER_CHAT_MODEL } from "../config/openAI";
 import CustomError from "http-errors";
 import { Subject } from "../schemas/topic.schema";
 import { callWithFallback } from "./openAI.service";
@@ -9,37 +8,24 @@ interface TopicGenerationResponse {
 }
 
 const validSubjects: Subject[] = [
-  "math",
-  "science",
-  "history",
-  "language",
-  "general",
-  "chemistry",
-  "physics",
-  "biology",
-  "geography",
-  "economics",
-  "political science",
-  "psychology",
-  "sociology",
-  "philosophy",
-  "art",
-  "music",
-  "physical education",
-  "computer science",
+  "math", "science", "history", "language", "general", "chemistry",
+  "physics", "biology", "geography", "economics", "political science",
+  "psychology", "sociology", "philosophy", "art", "music",
+  "physical education", "computer science",
 ];
 
-export const getTitleAndSubjectFromText = async (text: string[]) => {
-  let content = "";
-  let numberOfText = 1;
-  const model = OPENROUTER_CHAT_MODEL;
+export const getTitleAndSubjectFromText = async (texts: string[]) => {
+  const content = texts
+    .map((text, index) => `Resource ${index + 1}:\n${text}`)
+    .join("\n\n");
+
   const prompt = `
 You are an expert educational tutor.
 
 Analyze the resource's text content and determine the main
 learning topic and subject.
 
-Extracted Content: 
+Extracted Content:
 <extractedContent>
 ${content}
 </extractedContent>
@@ -67,36 +53,24 @@ Return ONLY valid JSON:
 }
 `;
 
-  const textContent = text.map((text) => {
-    content += `
-        Resource ${numberOfText}:
-
-        ${text}
-        `;
-  });
-
   const response = await callWithFallback(prompt);
-
   if (!response) {
     throw CustomError(500, "OpenRouter returned an empty response");
   }
 
-  let data: TopicGenerationResponse;
+  const cleaned = response.replace(/```json|```/g, "").trim();
 
+  let data: TopicGenerationResponse;
   try {
-    data = JSON.parse(content);
+    data = JSON.parse(cleaned);
   } catch {
     throw CustomError(500, "OpenRouter returned invalid JSON");
   }
 
   const { title, subject } = data;
-
   if (!title || !subject || !validSubjects.includes(subject)) {
     throw CustomError(500, "OpenRouter response missing title or subject");
   }
 
-  return {
-    title,
-    subject,
-  };
+  return { title, subject };
 };

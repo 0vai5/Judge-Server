@@ -1,4 +1,4 @@
-import { string, z } from "zod";
+import { z } from "zod";
 
 const SUBJECT_VALUES = [
   "math",
@@ -21,10 +21,6 @@ const SUBJECT_VALUES = [
   "computer science",
 ] as const;
 
-const StartTopicSchema = z.object({
-  subject: z.enum(SUBJECT_VALUES).optional(),
-});
-
 const UpdateTopicSchema = z.object({
   title: z
     .string()
@@ -35,20 +31,17 @@ const UpdateTopicSchema = z.object({
 });
 
 const StartTopicWithResourcesSchema = z.object({
-  s3Keys: z.array(z.string()),
+  sourceIds: z.array(z.string()).min(1, "At least one source ID is required"),
   userMessage: z.string(),
 });
 
 type Subject = (typeof SUBJECT_VALUES)[number];
-type StartTopicInput = z.infer<typeof StartTopicSchema>;
 type UpdateTopicInput = z.infer<typeof UpdateTopicSchema>;
 
 export {
-  SUBJECT_VALUES,
-  Subject,
-  StartTopicSchema,
-  StartTopicInput,
-  UpdateTopicSchema,
-  UpdateTopicInput,
-  StartTopicWithResourcesSchema
+    StartTopicWithResourcesSchema,
+    Subject,
+    SUBJECT_VALUES,
+    UpdateTopicInput,
+    UpdateTopicSchema
 };

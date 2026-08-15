@@ -1,59 +1,50 @@
 import { extractTextFromSource } from "./extraction.service";
 import { chunkText } from "../utils/chunkText";
-import { insertChunks } from "../dbActions/topicResource.actions";
-import { findSourceById } from "../dbActions/source.action";
-// ⚠️ ADJUST THIS IMPORT to match your actual embedding.service.ts export name/signature
+import { findSourceById } from "../dbActions/source.actions";
 import { generateEmbeddings } from "./embedding.service";
 
-type ProcessedSource = {
+type ExtractedSource = { sourceId: string; text: string };
+type EmbeddedChunk = {
   sourceId: string;
-  extractedText: string;
-  chunkCount: number;
+  chunkIndex: number;
+  chunkText: string;
+  embedding: number[];
 };
 
-export const processSource = async (
-  sourceId: string,
-  topicId: string,
+// Phase 1: download + extract text. No DB writes, no topicId needed.
+export const extractAllSourcesText = async (
+  sourceIds: string[],
   userId: string,
-): Promise<ProcessedSource> => {
-  const source = await findSourceById(sourceId, userId);
-  if (!source)
-    throw new Error(`Source not found or not owned by user: ${sourceId}`);
-
-  const extractedText = await extractTextFromSource(
-    source.s3Key,
-    source.contentType,
+): Promise<ExtractedSource[]> => {
+  return Promise.all(
+    sourceIds.map(async (sourceId) => {
+      const source = await findSourceById(sourceId, userId);
+      if (!source) throw new Error(`Source not found or not owned by user: ${sourceId}`);
+      const text = await extractTextFromSource(source.s3Key, source.contentType);
+      return { sourceId, text };
+    }),
   );
-  const chunks = chunkText(extractedText);
+};
 
-  if (chunks.length === 0) {
-    return { sourceId, extractedText: "", chunkCount: 0 };
+// Phase 2: chunk + embed. Still no DB writes — this is all network/CPU work,
+// deliberately kept OUTSIDE the transaction that comes later.
+export const embedAllChunks = async (
+  extracted: ExtractedSource[],
+): Promise<EmbeddedChunk[]> => {
+  const all: EmbeddedChunk[] = [];
+
+  for (const { sourceId, text } of extracted) {
+    const chunks = chunkText(text);
+    const embedded = await Promise.all(
+      chunks.map(async (chunk, chunkIndex) => ({
+        sourceId,
+        chunkIndex,
+        chunkText: chunk,
+        embedding: await generateEmbeddings(chunk),
+      })),
+    );
+    all.push(...embedded);
   }
 
-  const chunkRows = await Promise.all(
-    chunks.map(async (text, index) => ({
-      topicId,
-      sourceId,
-      userId,
-      chunkIndex: index,
-      chunkText: text,
-      embedding: await generateEmbeddings(text),
-    })),
-  );
-
-  await insertChunks(chunkRows);
-
-  return { sourceId, extractedText, chunkCount: chunks.length };
-};
-
-export const processAllSources = async (
-  sourceIds: string[],
-  topicId: string,
-  userId: string,
-): Promise<string> => {
-  const results = await Promise.all(
-    sourceIds.map((id) => processSource(id, topicId, userId)),
-  );
-  // Combined text goes into the topic-name/subject extraction prompt next
-  return results.map((r) => r.extractedText).join("\n\n");
+  return all;
 };
