@@ -8,14 +8,6 @@ type Values = {
   subject?: Subject;
 };
 
-export const createTopic = async (userId: string, subject?: Subject) => {
-  const values: typeof topics.$inferInsert = { userId };
-  if (subject) values.subject = subject;
-
-  const result = await db.insert(topics).values(values).returning();
-  return result[0] || null;
-};
-
 export const findTopicsByUser = async (userId: string) => {
   return db
     .select()

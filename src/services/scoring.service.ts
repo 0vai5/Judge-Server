@@ -1,6 +1,12 @@
-import { openAIClient, OPENROUTER_CHAT_MODEL, OPENROUTER_FALLBACK_MODELS } from "../config/openAI";
+import {
+  openAIClient,
+  OPENROUTER_CHAT_MODEL,
+  OPENROUTER_FALLBACK_MODELS,
+} from "../config/openAI";
 import { findMessagesBySession } from "../dbActions/transcriptMessage.actions";
 import { createScore, findScoreBySession } from "../dbActions/score.actions";
+import CustomError from "http-errors";
+import { callWithFallback } from "./openAI.service";
 
 type ScoreResult = {
   clarity: number;
@@ -40,24 +46,6 @@ const isValidScoreShape = (value: any): value is ScoreResult => {
   );
 };
 
-const callWithFallback = async (prompt: string) => {
-  const models = [OPENROUTER_CHAT_MODEL, ...OPENROUTER_FALLBACK_MODELS];
-
-  for (const model of models) {
-    try {
-      const response = await openAIClient.chat.completions.create({
-        model,
-        messages: [{ role: "user", content: prompt }],
-      });
-      const raw = response.choices[0]?.message?.content ?? "";
-      if (raw.trim()) return raw;
-    } catch (err) {
-      console.error(`Scoring failed on model ${model}:`, err);
-    }
-  }
-
-  throw new Error("All scoring models failed or returned empty responses");
-};
 
 export const scoreSession = async (sessionId: string) => {
   const existing = await findScoreBySession(sessionId);
@@ -67,7 +55,7 @@ export const scoreSession = async (sessionId: string) => {
   const userMessages = messages.filter((m) => m.role === "user");
 
   if (userMessages.length === 0) {
-    throw new Error("No user explanation found to score");
+    throw CustomError(404, "No user explanation found to score");
   }
 
   const transcript = userMessages.map((m) => m.content).join("\n");
@@ -80,11 +68,11 @@ export const scoreSession = async (sessionId: string) => {
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    throw new Error("Scoring model returned invalid JSON");
+    throw CustomError(500, "Scoring model returned invalid JSON");
   }
 
   if (!isValidScoreShape(parsed)) {
-    throw new Error("Scoring model returned an unexpected shape");
+    throw CustomError(500, "Scoring model returned an unexpected shape");
   }
 
   return createScore({
