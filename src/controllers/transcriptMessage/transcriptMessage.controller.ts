@@ -2,12 +2,10 @@ import { Request, Response } from "express";
 import CustomError from "http-errors";
 import { endSession, findSessionById } from "../../dbActions/session.actions";
 import {
-  createTranscriptMessage,
-  findFirstUserMessageBySession,
-  findMessagesBySession,
+    createTranscriptMessage,
+    findMessagesBySession
 } from "../../dbActions/transcriptMessage.actions";
 import { TranscriptMessageSchema } from "../../schemas/transcriptMessage.schema";
-import { generateTopicTitle } from "../../services/autoTitle.service";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";
 import { isSessionExpired } from "../../utils/sessionCap";
@@ -39,13 +37,6 @@ const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
     throw CustomError(400, error.issues?.[0]?.message || "Validation failed");
   }
 
-  // User's Message is the first message.
-
-  const isFirstUserMessage =
-    data.role === "user" && !(await findFirstUserMessageBySession(sessionId));
-
-  // Message document creation
-
   const message = await createTranscriptMessage({
     sessionId,
     userId,
@@ -53,18 +44,9 @@ const CreateMessage = asyncHandler(async (req: Request, res: Response) => {
     content: data.content,
   });
 
-  let topicInfo = null;
-
-  const { content } = data;
-
-  if (isFirstUserMessage) {
-    topicInfo = await generateTopicTitle(sessionId, userId, content);
-  }
-
   return res.status(201).json(
     new APIResponse("Message logged successfully", {
       message,
-      topic: topicInfo,
     }),
   );
 });

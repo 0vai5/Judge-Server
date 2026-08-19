@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { Request, Response } from "express";
 import CustomError from "http-errors";
 import { S3_BUCKET, s3Client } from "../../config/s3";
-import { createSource } from "../../dbActions/source.action";
+import { createSource } from "../../dbActions/source.actions";
 import { PresignRequestSchema } from "../../schemas/source.schema";
 import asyncHandler from "../../utils/asyncHandler";
 import { APIResponse } from "../../utils/response";

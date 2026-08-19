@@ -12,7 +12,7 @@ import sourceRoutes from "./source/source.routes"
 const router = Router();
 
 router.use("/auth", localAuthRoutes);
-router.use("/user", userRoutes);
+router.use("/users", userRoutes);
 router.use("/upload", sourceRoutes)
 router.use("/voice", voiceRoutes);
 router.use("/session", sessionRoutes);
